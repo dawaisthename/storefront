@@ -3,15 +3,16 @@ from django.db import models
 class Promotion(models.Model):
     discription = models.CharField(max_length=255)
     discount = models.FloatField()
-class Collection(models.Mode):
+class Collection(models.Model):
     title = models.CharField(max_length=255)
     #the circular dependency is handled
     featured_product = models.ForeignKey('Product',on_delete=models.SET_NULL,null = True,related_name='+') 
 
 class Product(models.Model):
     title = models.CharField(max_length=255)
+    slug = models.SlugField(default='-')
     description = models.TextField()
-    price = models.DecimalField(max_digits=6,decimal_places=2)
+    unit_price = models.DecimalField(max_digits=6,decimal_places=2)
     inventory = models.IntegerField()
     last_update = models.DateTimeField(auto_now=True)
     #guguarantee no product deleted when the collection is deleted
@@ -35,6 +36,7 @@ class Customer(models.Model):
     birth_date = models.DateField(null=True)
     membership = models.CharField(choices=MEMEBERSHIP_CHOICES,max_length=1,default=MEMEBERSHIP_BRONZE)
 
+   
 class Order(models.Model):
     #a good habit to use variables to store the choices
     PAYMENT_STATUS_PENDING = 'P'
@@ -52,18 +54,19 @@ class Order(models.Model):
 
 
 #when the products are ordered
-class OrderItem(models.Mode):
+class OrderItem(models.Model):
     order= models.ForeignKey(Order,on_delete=models.PROTECT)
     #one product could be orderd many times
     Product = models.ForeignKey(Product,on_delete=models.PROTECT)
     quantity = models.PositiveBigIntegerField() #make sure negative numbers won't stored
     unit_price = models.DecimalField(max_digits=6,decimal_places=2) #the latest price
     
-class Adress(models.Model):
+class Address(models.Model):
     street = models.CharField(max_length=255)
     city = models.CharField(max_length=255)
     #the relation between the customer and the adress
     customer = models.OneToOneField(Customer,on_delete=models.CASCADE,primary_key=True) #makes sure it is one to one
+    zip_code = models.CharField(max_length=20)  # ZIP code stored as a stringj
 class Cart(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
