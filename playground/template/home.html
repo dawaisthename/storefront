@@ -1,0 +1,18 @@
+<html>
+  <body>
+    <h1>customers</h1>
+    <ul>
+      {%for customer in customers%}
+      <li>
+        <!-- <strong>product title </strong> {{order.customer.first_name}} <br /> -->
+
+        <!-- <strong>unit_price</strong> <span>{{product.unit_price}}</span> <br /> -->
+        <strong>customer full name</strong>
+        <span>{{customer.full_name}}</span>
+        <strong>customer order count</strong>
+        <span>{customer.order_count}</span>
+      </li>
+      {%endfor%}
+    </ul>
+  </body>
+</html>
