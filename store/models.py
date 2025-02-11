@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.core.validators import MinValueValidator
 class Promotion(models.Model):
     discription = models.CharField(max_length=255)
     discount = models.FloatField()
@@ -15,15 +15,15 @@ class Collection(models.Model):
 
 class Product(models.Model):
     title = models.CharField(max_length=255)
-    slug = models.SlugField(default='-')
-    description = models.TextField()
-    unit_price = models.DecimalField(max_digits=6,decimal_places=2)
-    inventory = models.IntegerField()
+    slug = models.SlugField(default='')
+    description = models.TextField(null= True,blank=True)#make the null at  the database and the admin form
+    unit_price = models.DecimalField(max_digits=6,decimal_places=2,validators=[MinValueValidator(1)]) #make sure the price is postive
+    inventory = models.IntegerField(validators=[MinValueValidator(1)]) #make sure the price the attribute stays positive
     last_update = models.DateTimeField(auto_now=True)
     #guguarantee no product deleted when the collection is deleted
     Collection = models.ForeignKey(Collection,on_delete=models.PROTECT) #many to one relation between the collection and the product 
     #product could have a multiple promotion
-    Promotions = models.ManyToManyField(Promotion) 
+    Promotions = models.ManyToManyField(Promotion,blank=True)
 
     def __str__(self):
         return self.title

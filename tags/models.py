@@ -15,7 +15,8 @@ class TaggedItemManager(models.Manager):
 
 class Tag(models.Model):
     label = models.CharField(max_length=255)
-
+    def __str__(self):
+        return self.label
 
 #one tag could be used by many products
 class TaggedItem(models.Model):

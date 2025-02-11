@@ -22,4 +22,5 @@ admin.site.index_title = 'admin'
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('playground/',include('playground.urls')),
+    path("__reload__/",include("django_browser_reload.urls")),
 ] + debug_toolbar_urls()
