@@ -15,15 +15,15 @@ class Collection(models.Model):
 
 class Product(models.Model):
     title = models.CharField(max_length=255)
-    slug = models.SlugField(default='')
+    slug = models.SlugField()
     description = models.TextField(null= True,blank=True)#make the null at  the database and the admin form
     unit_price = models.DecimalField(max_digits=6,decimal_places=2,validators=[MinValueValidator(1)]) #make sure the price is postive
     inventory = models.IntegerField(validators=[MinValueValidator(1)]) #make sure the price the attribute stays positive
     last_update = models.DateTimeField(auto_now=True)
-    #guguarantee no product deleted when the collection is deleted
+    #guarantee no product deleted when the collection is deleted
     Collection = models.ForeignKey(Collection,on_delete=models.PROTECT) #many to one relation between the collection and the product 
     #product could have a multiple promotion
-    Promotions = models.ManyToManyField(Promotion,blank=True)
+    Promotions = models.ManyToManyField(Promotion,blank=True) #since it is many to many if nothing is selected it will be set to empty
 
     def __str__(self):
         return self.title
@@ -71,9 +71,10 @@ class Order(models.Model):
 
 #when the products are ordered
 class OrderItem(models.Model):
+    
     order= models.ForeignKey(Order,on_delete=models.PROTECT)
     #one product could be ordered many times
-    Product = models.ForeignKey(Product,on_delete=models.PROTECT)
+    Product = models.ForeignKey(Product,on_delete=models.PROTECT,related_name='orderitems')
     quantity = models.PositiveBigIntegerField() #make sure negative numbers won't stored
     unit_price = models.DecimalField(max_digits=6,decimal_places=2) #the latest price
     
