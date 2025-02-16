@@ -1,7 +1,7 @@
 #convert the model instance to a dictionary
 from rest_framework import serializers
 from decimal import Decimal
-from .models import Collection,Product,Customer,Order
+from .models import Collection,Product,Customer,Order,Review
 
 class CollectionSerializer(serializers.ModelSerializer):
   
@@ -13,18 +13,15 @@ class CollectionSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer): #this modelserialzer has save  method to create and update 
     #using a modelserializer
+
+    reviews = serializers.StringRelatedField(many = True)
     class Meta:
         model = Product
-        fields =['id','title','slug','inventory','description','unit_price','price_with_tax','Collection']
-    # id = serializers.IntegerField()
-    # title = serializers.CharField(max_length = 255)
-    # price = serializers.DecimalField(max_digits=6,decimal_places=2)
-    # price = serializers.DecimalField(max_digits=6,decimal_places=2,source ='unit_price') #telling django where to refer since the fields name mismatch
+        fields =['id','title','slug','inventory','description','unit_price','price_with_tax','Collection','reviews']
+    
     price_with_tax= serializers.SerializerMethodField(method_name='calculate_tax')
-    #creating a Relationship serializer
-    # collection = serializers.StringRelatedField(source= "Collection")
     #using a hyperlink
-    # Collection = serializers.HyperlinkedRelatedField(queryset = Collection.objects.all(),view_name= "collection_detail")
+    Collection = serializers.HyperlinkedRelatedField(queryset = Collection.objects.all(),view_name= "collection-detail")
     #creating a custom serializer fields
     def calculate_tax(self,product): #passing the instance of the object as a parameter
         return product.unit_price* Decimal(1.1)
@@ -55,5 +52,15 @@ class OrderSerializer(serializers.ModelSerializer):
     customer = serializers.HyperlinkedRelatedField(queryset = Customer.objects.all(),view_name= "customer_detail")
     class Meta:
         model = Order
-        fields = ['payment_status','placed_at','orders_item','customer']
+        fields = ['id','payment_status','placed_at','orders_item','customer']
     
+class ReviewsSerializer(serializers.ModelSerializer):
+    product= serializers.HyperlinkedRelatedField(view_name ='product-detail',read_only=True) #no need to include the queryset because it's fetching is handled another way by reading its id from the url
+    class Meta:
+        model = Review
+        fields = ['id','name','description','product']
+    
+    #overriding the creation of thre review
+    def create(self, validated_data):
+        product_id  = self.context.get('product_id') #read the product id from the context
+        return Review.objects.create(product_id=product_id,**validated_data)
