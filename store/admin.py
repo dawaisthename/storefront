@@ -1,7 +1,7 @@
 from django.contrib import admin,messages
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.db.models import Count
-from .models import Collection,Product,Customer,Order,OrderItem
+from .models import Collection,Product,Customer,Order,OrderItem,Cart,CartItem
 from django.utils.html import format_html,urlencode
 from django.urls import reverse
 
@@ -104,3 +104,5 @@ admin.site.register(Product,ProductAdmin)
 admin.site.register(Customer,CustomerAdmin)
 admin.site.register(Order,OrderAdmin)
 admin.site.register(Collection,CollectionAdmin)
+admin.site.register(Cart)
+admin.site.register(CartItem)
