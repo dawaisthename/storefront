@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'tags',
     'store',
     'playground',
-    'store_custom',
+    'core',
     'debug_toolbar'
 ]
 
@@ -143,3 +143,5 @@ REST_FRAMEWORK = {
     'PAGE_SIZE':10
 
 }
+
+AUTH_USER_MODEL = 'core.user' #telling django to use the updated user model

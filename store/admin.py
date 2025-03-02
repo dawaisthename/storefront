@@ -68,7 +68,8 @@ class CustomerAdmin(admin.ModelAdmin):
     list_display = ['first_name','last_name','membership','orders_count']
     list_editable = ['membership']
     search_fields = ['first_name__istartswith']    
-
+    ordering = ['user__first_name','user__last_name']
+    list_select_related = ['user']
     @admin.display
     def orders_count(self,customer):
         #prodviding a link to other page
