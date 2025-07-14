@@ -9,29 +9,43 @@ class Promotion(models.Model):
 class Collection(models.Model):
     title = models.CharField(max_length=255)
     #the circular dependency is handled
-    featured_product = models.ForeignKey('Product',on_delete=models.SET_NULL,null = True,related_name='+') 
+    featured_product = models.ForeignKey('Product',on_delete=models.SET_NULL,null = True,related_name='+',blank=True) 
 
     def __str__(self):
         return self.title
     class Meta:
         ordering = ['title']
+class CollectionFeaturedImage(models.Model):
 
+    image =models.ImageField(upload_to='store/collections/images')
+    uploaded_at = models.DateTimeField(auto_now_add=True) 
+    collection = models.ForeignKey(Collection,on_delete=models.CASCADE,related_name='feature_image')
+    def __str__(self):
+        return f"image of {self.collection.title}"
 class Product(models.Model):
     title = models.CharField(max_length=255)
-    slug = models.SlugField()
+    slug = models.SlugField(unique=True,blank=True)
     description = models.TextField(null= True,blank=True)#make the null at  the database and the admin form
     unit_price = models.DecimalField(max_digits=6,decimal_places=2,validators=[MinValueValidator(1)]) #make sure the price is postive
     inventory = models.IntegerField(validators=[MinValueValidator(1)]) #make sure the price the attribute stays positive
     last_update = models.DateTimeField(auto_now=True)
     #guarantee no product deleted when the collection is deleted
-    Collection = models.ForeignKey(Collection,on_delete=models.PROTECT) #many to one relation between the collection and the product 
+    collection = models.ForeignKey(Collection,on_delete=models.PROTECT) #many to one relation between the collection and the product 
     #product could have a multiple promotion
-    Promotions = models.ManyToManyField(Promotion,blank=True) #since it is many to many if nothing is selected it will be set to empty
+    promotions = models.ManyToManyField(Promotion,blank=True) #since it is many to many if nothing is selected it will be set to empty
+    
 
     def __str__(self):
         return self.title
     class Meta:
         ordering = ['title']
+class ProductImage(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='store/prdoucts/images')  # adjust path as needed
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+      return f'Image of "{self.product.title}"'
+
 class Customer(models.Model):
     MEMEBERSHIP_BRONZE = 'B'
     MEMEBERSHIP_SILVER = 'S'
@@ -85,7 +99,7 @@ class OrderItem(models.Model):
     
     order= models.ForeignKey(Order,on_delete=models.PROTECT)
     #one product could be ordered many times
-    Product = models.ForeignKey(Product,on_delete=models.PROTECT,related_name='orderitems')
+    product = models.ForeignKey(Product,on_delete=models.PROTECT,related_name='orderitems')
     quantity = models.PositiveBigIntegerField() #make sure negative numbers won't stored
     unit_price = models.DecimalField(max_digits=6,decimal_places=2) #the latest price
     
@@ -98,6 +112,9 @@ class Address(models.Model):
 class Cart(models.Model):
     id = models.UUIDField(primary_key=True,default=uuid4)
     created_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,null=True,blank=True)
+    class Meta:
+        unique_together = [['user']]
     
 
 class CartItem(models.Model):

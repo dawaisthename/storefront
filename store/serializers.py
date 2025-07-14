@@ -1,31 +1,47 @@
 #convert the model instance to a dictionary
 from rest_framework import serializers
 from decimal import Decimal
-from .models import Collection,Product,Customer,Order,Review,Cart,CartItem
+from .models import Collection,Product,Customer,Order,Review,Cart,CartItem,ProductImage,CollectionFeaturedImage
+from django.utils.text import slugify
 
-class CollectionSerializer(serializers.ModelSerializer):
-  
-    product_count = serializers.IntegerField(read_only=True)
+
+class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Collection
-        fields = ['id', 'title', 'product_count']
-
-
+        model = ProductImage
+        fields =['id','image','uploaded_at']
 class ProductSerializer(serializers.ModelSerializer): #this modelserialzer has save  method to create and update 
     #using a modelserializer
-
-    reviews = serializers.StringRelatedField(many = True)
+    images = ProductImageSerializer(many=True,read_only=True)
+    reviews = serializers.StringRelatedField(many = True,read_only=True)
+    
     class Meta:
         model = Product
-        fields =['id','title','slug','inventory','description','unit_price','price_with_tax','Collection','reviews']
+        fields =['id','title','slug','inventory','description','unit_price','price_with_tax','collection','reviews','images']
     
     price_with_tax= serializers.SerializerMethodField(method_name='calculate_tax')
     #using a hyperlink
-    Collection = serializers.HyperlinkedRelatedField(queryset = Collection.objects.all(),view_name= "collection-detail")
+    # Collection = serializers.HyperlinkedRelatedField(queryset = Collection.objects.all(),view_name= "collection-detail")
+    collection = serializers.PrimaryKeyRelatedField(queryset=Collection.objects.all())
     #creating a custom serializer fields
     def calculate_tax(self,product): #passing the instance of the object as a parameter
         return product.unit_price* Decimal(1.1)
-
+    def generate_unique_slug(self,title):
+        base_slug = slugify(title)
+        slug = base_slug
+        index = 1
+        while Product.objects.filter(slug=slug).exists():
+            index+=1
+            slug=f"{base_slug} -- {index}"
+        return slug
+    def create(self, validated_data):
+        if not validated_data.get('slug'):
+            validated_data['slug']=self.generate_unique_slug(validated_data['title'])
+        return super().create(validated_data)
+    #we have to override the update method too just incase the title is updated and the slug has to as well
+    def update(self, instance, validated_data):
+        if validated_data.get('title') and not validated_data.get('slug'):
+            validated_data['slug'] =self.generate_unique_slug(validated_data['title'])
+        return super().update(instance, validated_data)
     #how to override the create and update method of the serializer
     # #just a show off
     #the save method will call one of this method depending on the state of the serializer
@@ -38,13 +54,28 @@ class ProductSerializer(serializers.ModelSerializer): #this modelserialzer has s
     #     instance.unit_price  = validated_data.get('unit_price') #let's say we want to update the price
     #     instance.save()
     #     return instance
+class CollectionFeatureImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model =CollectionFeaturedImage
+        fields =['id','image','uploaded_at','collection']
+
+class CollectionSerializer(serializers.ModelSerializer):
+  
+    product_count = serializers.IntegerField(read_only=True)
+    products = ProductSerializer(read_only=True,many=True,source='product_set')
+    feature_image = CollectionFeatureImageSerializer(many = True,read_only=True)
+    class Meta:
+        model = Collection
+        fields = ['id', 'title', 'product_count','products','feature_image']
+
 
 #making a serialzer for the customer
 class CustomerSerializer(serializers.ModelSerializer):
+    user_id = serializers.IntegerField(read_only=True)
+    # orders_count = serializers.IntegerField(read_only= True)
     class Meta:
         model = Customer
-        fields=  ['last_name','first_name','orders_count']
-    orders_count = serializers.IntegerField(read_only= True)
+        fields=  ['id','user_id','phone','membership','birth_date']
 
 class OrderSerializer(serializers.ModelSerializer):
     orders_item = serializers.IntegerField(read_only=True)
@@ -118,3 +149,4 @@ class CartSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cart
         fields = ['id','items','created_at','total_price']
+
